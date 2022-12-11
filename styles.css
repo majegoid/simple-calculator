@@ -29,7 +29,7 @@ body {
     flex-basis: calc(var(--calculator-width) / 5);
     
     
-    height: calc((var(--calculator-height) - var(--display-height) - 5*var(--buttons-flex-container-gap) - 2*var(--body-padding)) / 6);
+    height: calc((var(--calculator-height) - var(--display-height) - 5*var(--buttons-flex-container-gap) - 2*var(--body-padding)) / 5);
     border: 2px solid #ccc;
     padding: 0.5rem;
 
@@ -50,6 +50,12 @@ body {
 .button-blue {
     border: 2px solid #c00;
     background-color: #f00;
+}
+
+.button-wide {
+    flex-grow: 2;
+    flex-shrink: 1;
+    flex-basis: calc(var(--calculator-width) / 5 * 2)
 }
 
 #calculator-body {
