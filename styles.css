@@ -9,7 +9,7 @@
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    box-sizing: border-box;    
 }
 
 html {
@@ -31,9 +31,15 @@ body {
     height: calc((var(--calculator-height) - var(--display-height) - 5*var(--buttons-flex-container-gap) - 2*var(--body-padding)) / 5);
     border: 2px solid #ccc;
     padding: 0.5rem;
+    font-size: 1.75rem;
 
     background-color: #ddd;
     text-align: center;
+
+    /* Disable Selection of Text */
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
 }
 
 .button:hover {
@@ -78,13 +84,13 @@ body {
     height: var(--display-height);
 
     text-align: right;
-    font-size: 3rem;
+    font-size: 1.75rem;
 }
 
 #expression-display {
     position: absolute;
-    top: 0;
-    right: 0;
+    top: 0.5rem;
+    right: 0.5rem;
     
     font-size: 1rem;
     color: #555;

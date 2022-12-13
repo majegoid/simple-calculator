@@ -1,9 +1,11 @@
 // state
-let operandA = undefined;
-let operandB = undefined;
-let operator = undefined;
-let operatorFunc = undefined;
-let expressionString = '';
+let operandA = '';
+let operandB = '';
+let operator = '';
+let equals = '';
+let result = '';
+let operatorFunc = null;
+let expressionString = `${operandA} ${operator} ${operandB} ${equals}`;
 let resultString = '0';
 
 // document queries
@@ -64,62 +66,26 @@ const divide = (a, b) => a / b;
 // event handlers
 // function to handle all number key presses
 function handleNumberKeyPress(e) {
-  let inputNumberAsString = e.currentTarget.id.split('-')[1];
-  let inputNumber = Number(inputNumberAsString);
-
-  // case where there is no value for the left operand A
-  if (operandA === undefined) {
-    operandA = inputNumber;
-    // case where resultString is not '0' - append the operand
-    if (resultString !== '0') {
-      resultString += inputNumberAsString;
-    }
-    // case where resultString is '0' - replace with the operand
-    if (resultString === '0') {
-      resultString = inputNumberAsString;
-    }
-    expressionString += inputNumberAsString;
-    updateDisplays();
-    return;
-  }
-
-  // when operand A, operator, and operand B are given
-  if (operandA !== undefined && operator !== undefined && operandB !== undefined) {
-    let operandBAsString = String(operandB) + String(inputNumber);
-    operandB = Number(operandBAsString);
-    resultString = operandBAsString;
-    expressionString += String(inputNumber);
-    updateDisplays();
-    return;
-  }
-
-  // when operand A is given and operator is not given
-  if (operandA !== undefined && operator === undefined) {
-    let operandAAsString = String(operandA);
-    operandA = Number(operandAAsString + inputNumberAsString);
-    operandAAsString = String(operandA);
-    resultString = operandAAsString;
-    expressionString = operandAAsString;
-    updateDisplays();
-    return;
-  }
-
-  // when operand A and operator are given
-  if (operandA !== undefined && operator !== undefined) {
-    operandB = inputNumber;
-    resultString = inputNumberAsString;
-    expressionString += ` ${inputNumberAsString}`;
-    updateDisplays();
-    return;
-  }
+  if (result) clear();
+  let inputNumber = e.currentTarget.id.split('-')[1];
+  // accumulate digits on operandA
+  if (operandA && !operator && !operandB) operandA += inputNumber;
+  // accumulate digits on operandB
+  if (operandA && operator && operandB) operandB += inputNumber;
+  // first digit for operandA
+  if (!operandA && !operator && !operandB) operandA = inputNumber;
+  // first digit for operandB
+  if (operandA && operator && !operandB) operandB = inputNumber;
+  updateDisplays();
 }
 
 // function to handle all operator key presses
 function handleOperatorKeyPress(e) {
-  // exit if waiting on operandB
-  if (operandA !== undefined && operator !== undefined) {
-    return;
-  }
+  // if we have a result from an operation, put it as operandA
+  if (result) updateExpressionToResult();
+
+  // if we have a period as the last character of either operandA or operandB
+  removeTrailingPeriodsFromOperands();
 
   // based on key id, set operatorFunc and operator
   let keyId = e.currentTarget.id;
@@ -144,90 +110,111 @@ function handleOperatorKeyPress(e) {
       throw new Error('Invalid operator id.');
   }
 
-  // case where the operator is input first and operandA is undefined
-  if (operandA === undefined && resultString === '0') {
-    operandA = Number(resultString);
-    // resultString stays '0'
-    expressionString += `${operandA} ${operator}`;
-    updateDisplays();
-    return;
+  // an operator key was pressed first
+  if (!operandA && !operator && !operandB && !result) {
+    operandA = '0';
   }
 
-  // case where the operation is done
-  if (operatorFunc && operandA !== undefined && operandB !== undefined) {
-    let result = operate(operatorFunc, operandA, operandB);
-    // update operandA to be the result
-    return;
+  // do an operation
+  if (operandA && operator && operandB && !result) {
+    result = operate(operatorFunc, Number(operandA), Number(operandB));
+    updateExpressionToResult();
   }
 
-  // case where the operator is appended to the left operand
-  if (operandA !== undefined && operandB === undefined) {
-    expressionString += ` ${operator}`;
-    resultString = String(operandA);
-    updateDisplays();
-    return;
-  }
+  updateDisplays();
 }
 
 function handleEqualsKeyPress(e) {
-  if (operandA !== undefined && operandB !== undefined && operatorFunc) {
-    // perform operation
-    let result = operate(operatorFunc, operandA, operandB);
-    // set up operands A and B for the next operation
-    operandA = Number(result);
-    operandB = undefined;
-    // set up display values
-    expressionString += ' =';
-    resultString = String(result);
-    updateDisplays();
-    // set expression to operandA for the next operation
-    expressionString = String(operandA);
+  removeTrailingPeriodsFromOperands();
+  // if there's a result, store it as operandA, reset the result
+  if (result) {
+    operandA = result;
+    result = '';
   }
+  //if we have A op, but not B or a result, set up for performing A op A
+  if (operandA && operator && !operandB && !result) {
+    operandB = operandA;
+  }
+  //A op B, but no result: perform the operation
+  if (operandA && operator && operandB && !result) {
+    result = operate(operatorFunc, Number(operandA), Number(operandB));
+    equals = '=';
+  }
+  updateDisplays();
 }
 
 function handleClearKeyPress(e) {
-  operandA = undefined;
-  operandB = undefined;
-  operator = undefined;
-  // expressionString must have an operator to be cleared properly
-  expressionString = '';
-  resultString = '0';
+  clear();
   updateDisplays();
 }
 
 function handlePeriodKeyPress(e) {
-  console.log('period key pressed');
-  // case where operandA should be edited
-  if (operandA !== undefined && operator === undefined) {
-    expressionString = String(operandA) + '.';
-    resultString = String(operandA) + '.';
-    updateDisplays();
-  }
-  // case where operandB should be edited
+  // operandA can have a period appended to it
+  if (operandA && !operator && !operandB && !Array.from(operandA).find((c) => c === '.'))
+    operandA += '.';
+  // operandB can have a period appended to it
+  if (operandA && operator && operandB && !Array.from(operandB).find((c) => c === '.'))
+    operandB += '.';
+  updateDisplays();
 }
 
 // all operator keys call operate (+,-,*,/,=)
 function operate(operatorFunc, a, b) {
-  if (operatorFunc && a !== undefined && b !== undefined) return operatorFunc(a, b);
+  if (
+    operatorFunc &&
+    typeof a === 'number' &&
+    !Number.isNaN(a) &&
+    typeof b === 'number' &&
+    !Number.isNaN(b)
+  ) {
+    return String(operatorFunc(a, b));
+  }
 }
 
-function updateDisplays(
-  resultDisplayValue = resultString,
-  expressionDisplayValue = expressionString
-) {
-  resultDisplayDiv.textContent = resultDisplayValue;
-  // clear button case
-  if (expressionDisplayValue === '') {
-    expressionDisplayDiv.textContent = expressionDisplayValue;
-    return;
+function clear() {
+  operandA = '';
+  operandB = '';
+  operator = '';
+  equals = '';
+  result = '';
+  resultString = '0';
+}
+
+function updateExpressionToResult() {
+  operandA = result;
+  operator = '';
+  operandB = '';
+  equals = '';
+  result = '';
+}
+
+function updateDisplays() {
+  if (operandA && !operandB) resultString = operandA;
+  if (operandA && operandB) resultString = operandB;
+  if (operandA && operandB && result) resultString = result;
+  // check if result has a decimal point, round to 3 decimal places
+  let resultAsArr = Array.from(result);
+  if (resultAsArr.find((c) => c === '.')) {
+    if (result.split('.')[1].length > 3) {
+      result = Number(result).toFixed(3);
+      resultString = result;
+    }
   }
-  // update expressionDisplayDiv only if expressionDisplayValue contains an operator:
-  let expressionContainsOperator = Array.from(expressionDisplayValue).find((c) =>
-    ['+', '-', '*', '/', '='].includes(c)
-  );
-  if (expressionContainsOperator) {
-    expressionDisplayDiv.textContent = expressionDisplayValue;
+  resultDisplayDiv.textContent = resultString;
+  expressionString = `${operandA} ${operator} ${operandB} ${equals}`;
+  expressionDisplayDiv.textContent = expressionString.trim();
+}
+
+function removeTrailingPeriod(string) {
+  if (string.charAt(string.length - 1) === '.') {
+    return string.slice(0, length - 1);
   }
+  return string;
+}
+
+function removeTrailingPeriodsFromOperands() {
+  operandA = removeTrailingPeriod(operandA);
+  operandB = removeTrailingPeriod(operandB);
 }
 
 // update displays initially
