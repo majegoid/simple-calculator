@@ -7,6 +7,7 @@ let result = '';
 let operatorFunc = null;
 let expressionString = `${operandA} ${operator} ${operandB} ${equals}`;
 let resultString = '0';
+let hasError = false;
 
 // document queries
 // number keys
@@ -66,6 +67,7 @@ const divide = (a, b) => a / b;
 // event handlers
 // function to handle all number key presses
 function handleNumberKeyPress(e) {
+  if (hasError) return;
   if (result) clear();
   let inputNumber = e.currentTarget.id.split('-')[1];
   // accumulate digits on operandA
@@ -81,6 +83,7 @@ function handleNumberKeyPress(e) {
 
 // function to handle all operator key presses
 function handleOperatorKeyPress(e) {
+  if (hasError) return;
   // if we have a result from an operation, put it as operandA
   if (result) updateExpressionToResult();
 
@@ -125,6 +128,7 @@ function handleOperatorKeyPress(e) {
 }
 
 function handleEqualsKeyPress(e) {
+  if (hasError) return;
   removeTrailingPeriodsFromOperands();
   // if there's a result, store it as operandA, reset the result
   if (result) {
@@ -149,6 +153,7 @@ function handleClearKeyPress(e) {
 }
 
 function handlePeriodKeyPress(e) {
+  if (hasError) return;
   // operandA can have a period appended to it
   if (operandA && !operator && !operandB && !Array.from(operandA).find((c) => c === '.'))
     operandA += '.';
@@ -159,6 +164,7 @@ function handlePeriodKeyPress(e) {
 }
 
 function handleDeleteKeyPress(e) {
+  if (hasError) return;
   if (operandA && operator && operandB && equals) {
     result = '';
     equals = '';
@@ -206,7 +212,10 @@ function operate(operatorFunc, a, b) {
     if (operator === '/' && b === 0) {
       let errorMessage = "Can't divide by zero.";
       setErrorState(errorMessage);
-      throw new Error(errorMessage);
+      // updateDisplays();
+      resultDisplayDiv.textContent = errorMessage;
+      hasError = true;
+      return;
     }
     return String(operatorFunc(a, b));
   }
@@ -219,6 +228,7 @@ function clear() {
   equals = '';
   result = '';
   resultString = '0';
+  hasError = false;
 }
 
 function updateExpressionToResult() {
@@ -231,14 +241,16 @@ function updateExpressionToResult() {
 
 function updateDisplays() {
   if (operandA && !operandB) resultString = operandA;
-  if (operandA && operandB) resultString = operandB;
+  // if (operandA && operandB) resultString = operandB;
   if (operandA && operandB && result) resultString = result;
   // check if result has a decimal point, round to 3 decimal places
-  let resultAsArr = Array.from(result);
-  if (resultAsArr.find((c) => c === '.')) {
-    if (result.split('.')[1].length > 3) {
-      result = Number(result).toFixed(3);
-      resultString = result;
+  if (result) {
+    let resultAsArr = Array.from(result);
+    if (resultAsArr.find((c) => c === '.')) {
+      if (result.split('.')[1].length > 3) {
+        result = Number(result).toFixed(3);
+        resultString = result;
+      }
     }
   }
   if (!operandA) resultString = '0';
