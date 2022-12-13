@@ -31,7 +31,7 @@ body {
     height: calc((var(--calculator-height) - var(--display-height) - 5*var(--buttons-flex-container-gap) - 2*var(--body-padding)) / 5);
     border: 2px solid #ccc;
     padding: 0.5rem;
-    font-size: 1.75rem;
+    font-size: 1.5rem;
 
     background-color: #ddd;
     text-align: center;
@@ -84,7 +84,7 @@ body {
     height: var(--display-height);
 
     text-align: right;
-    font-size: 1.75rem;
+    font-size: 1.9rem;
 }
 
 #expression-display {

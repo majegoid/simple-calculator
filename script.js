@@ -55,7 +55,7 @@ keyDivideDiv.onclick = handleOperatorKeyPress;
 keyEqualsDiv.onclick = handleEqualsKeyPress;
 keyClearDiv.onclick = handleClearKeyPress;
 keyPeriodDiv.onclick = handlePeriodKeyPress;
-// keyDeleteDiv.onclick = handleDeleteKeyPress;
+keyDeleteDiv.onclick = handleDeleteKeyPress;
 
 // operation functions
 const add = (a, b) => a + b;
@@ -158,6 +158,41 @@ function handlePeriodKeyPress(e) {
   updateDisplays();
 }
 
+function handleDeleteKeyPress(e) {
+  if (operandA && operator && operandB && equals) {
+    result = '';
+    equals = '';
+    updateDisplays();
+    return;
+  }
+  if (operandA && operator && operandB) {
+    result = '';
+    equals = '';
+    if (operandB.length === 1) operandB = '';
+    if (operandB.length > 1) operandB = operandB.slice(0, operandB.length - 1);
+    updateDisplays();
+    return;
+  }
+  if (operandA && operator) {
+    result = '';
+    equals = '';
+    operandB = '';
+    operator = '';
+    updateDisplays();
+    return;
+  }
+  if (operandA) {
+    result = '';
+    equals = '';
+    operandB = '';
+    operator = '';
+    if (operandA.length === 1) operandA = '';
+    if (operandA.length > 1) operandA = operandA.slice(0, operandA.length - 1);
+    updateDisplays();
+    return;
+  }
+}
+
 // all operator keys call operate (+,-,*,/,=)
 function operate(operatorFunc, a, b) {
   if (
@@ -167,6 +202,12 @@ function operate(operatorFunc, a, b) {
     typeof b === 'number' &&
     !Number.isNaN(b)
   ) {
+    // handle divide by 0 with error
+    if (operator === '/' && b === 0) {
+      let errorMessage = "Can't divide by zero.";
+      setErrorState(errorMessage);
+      throw new Error(errorMessage);
+    }
     return String(operatorFunc(a, b));
   }
 }
@@ -200,6 +241,7 @@ function updateDisplays() {
       resultString = result;
     }
   }
+  if (!operandA) resultString = '0';
   resultDisplayDiv.textContent = resultString;
   expressionString = `${operandA} ${operator} ${operandB} ${equals}`;
   expressionDisplayDiv.textContent = expressionString.trim();
@@ -215,6 +257,10 @@ function removeTrailingPeriod(string) {
 function removeTrailingPeriodsFromOperands() {
   operandA = removeTrailingPeriod(operandA);
   operandB = removeTrailingPeriod(operandB);
+}
+
+function setErrorState(message) {
+  resultString = message;
 }
 
 // update displays initially
